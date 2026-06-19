@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'services/wallpaper_setter.dart';
 import 'models/wallpaper.dart';
 import 'services/wallpaper_cache.dart';
 import 'services/wallpaper_service.dart';
@@ -43,7 +43,9 @@ class _HomeScreenState
   bool loading = true;
 
   String target = "Both";
+  String changeMode = "interval";
   int intervalHours = 3;
+  int intervalMinutes = 0;
 
   @override
   void initState() {
@@ -207,71 +209,161 @@ class _HomeScreenState
               const SizedBox(height: 35),
 
               const Text(
-                "Change Every",
+                "Change Mode",
                 style: TextStyle(
                   fontSize: 16,
                 ),
               ),
 
-              SizedBox(
-                height: 160,
-                child:
-                    ListWheelScrollView
-                        .useDelegate(
-                  itemExtent: 45,
-                  perspective:
-                      0.004,
-                  diameterRatio:
-                      1.7,
-                  controller:
-                      FixedExtentScrollController(
-                    initialItem:
-                        intervalHours -
-                            1,
-                  ),
-                  onSelectedItemChanged:
-                      (index) {
-                    setState(() {
-                      intervalHours =
-                          index + 1;
-                    });
-                  },
-                  childDelegate:
-                      ListWheelChildBuilderDelegate(
-                    childCount: 24,
-                    builder:
-                        (context,
-                            index) {
-                      final hour =
-                          index + 1;
-
-                      return Center(
-                        child: Text(
-                          "$hour h",
-                          style:
-                              const TextStyle(
-                            fontSize:
-                                22,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-
-              const Spacer(),
+              const SizedBox(height: 12),
 
               Padding(
-                padding:
-                    const EdgeInsets
-                        .all(20),
-                child: Text(
-                  "Auto change every $intervalHours hour${intervalHours > 1 ? 's' : ''}",
-                  textAlign:
-                      TextAlign.center,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                ),
+                child: SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(
+                      value: "interval",
+                      label: Text("Timer"),
+                    ),
+                    ButtonSegment(
+                      value: "fixed",
+                      label: Text("Fixed"),
+                    ),
+                    ButtonSegment(
+                      value: "unlock",
+                      label: Text("Unlock"),
+                    ),
+                  ],
+                  selected: {changeMode},
+                  onSelectionChanged: (value) {
+                    setState(() {
+                      changeMode = value.first;
+                    });
+                  },
                 ),
               ),
+              const SizedBox(height: 35),
+
+              if (changeMode == "interval") ...[
+
+                const Text(
+                  "Change Every",
+                  style: TextStyle(
+                    fontSize: 16,
+                  ),
+                ),
+
+                const SizedBox(height: 15),
+
+                Row(
+                  children: [
+
+                    Expanded(
+                      child: SizedBox(
+                        height: 160,
+                        child: ListWheelScrollView.useDelegate(
+                          itemExtent: 45,
+                          perspective: 0.004,
+                          diameterRatio: 1.7,
+                          controller: FixedExtentScrollController(
+                            initialItem: intervalHours,
+                          ),
+                          onSelectedItemChanged: (index) {
+                            setState(() {
+                              intervalHours = index;
+                            });
+                          },
+                          childDelegate:
+                              ListWheelChildBuilderDelegate(
+                            childCount: 24,
+                            builder: (context, index) {
+                              return Center(
+                                child: Text(
+                                  "${index.toString().padLeft(2, '0')} h",
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    Expanded(
+                      child: SizedBox(
+                        height: 160,
+                        child: ListWheelScrollView.useDelegate(
+                          itemExtent: 45,
+                          perspective: 0.004,
+                          diameterRatio: 1.7,
+                          controller: FixedExtentScrollController(
+                            initialItem: intervalMinutes ~/ 5,
+                          ),
+                          onSelectedItemChanged: (index) {
+                            setState(() {
+                              intervalMinutes = index * 5;
+                            });
+                          },
+                          childDelegate:
+                              ListWheelChildBuilderDelegate(
+                            childCount: 12,
+                            builder: (context, index) {
+                              final minute = index * 5;
+
+                              return Center(
+                                child: Text(
+                                  "${minute.toString().padLeft(2, '0')} m",
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    "Auto change every ${intervalHours.toString().padLeft(2, '0')}h ${intervalMinutes.toString().padLeft(2, '0')}m",
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+
+              if (changeMode == "fixed") ...[
+                const Spacer(),
+                const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text(
+                    "Wallpaper remains fixed until changed manually.",
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+
+              if (changeMode == "unlock") ...[
+                const Spacer(),
+                const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text(
+                    "Wallpaper changes every time the phone is unlocked.",
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+
+              const Spacer(),
             ],
           ),
         ),
@@ -443,28 +535,45 @@ class _HomeScreenState
                                 18),
 
                         SizedBox(
-                          width: double
-                              .infinity,
-                          height: 56,
-                          child:
-                              ElevatedButton(
-                            onPressed:
-                                () {
-                              ScaffoldMessenger.of(
-                                      context)
-                                  .showSnackBar(
+                          width: double.infinity,
+                          height: 60,
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.wallpaper),
+                            label: const Text(
+                              "Apply Wallpaper",
+                              style: TextStyle(
+                                fontSize: 18,
+                              ),
+                            ),
+                            onPressed: () async {
+                              final wallpaper = cache!.current;
+
+                              ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content:
-                                      Text(
-                                    "Wallpaper setting coming next",
+                                  content: Text(
+                                    'Applying wallpaper...',
+                                  ),
+                                ),
+                              );
+
+                              final success =
+                                  await WallpaperSetter.setWallpaper(
+                                imageUrl: wallpaper.url,
+                                target: target,
+                              );
+
+                              if (!mounted) return;
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    success
+                                        ? 'Wallpaper Applied!'
+                                        : 'Failed to apply wallpaper',
                                   ),
                                 ),
                               );
                             },
-                            child:
-                                const Text(
-                              "Apply Wallpaper",
-                            ),
                           ),
                         ),
                       ],

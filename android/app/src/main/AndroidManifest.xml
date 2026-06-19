@@ -35,6 +35,15 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <receiver
+            android:name=".UnlockReceiver"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.USER_PRESENT"/>
+            </intent-filter>
+
+        </receiver>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
@@ -47,4 +56,5 @@
             <data android:mimeType="text/plain"/>
         </intent>
     </queries>
+    
 </manifest>
