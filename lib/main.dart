@@ -3,8 +3,18 @@ import 'services/wallpaper_setter.dart';
 import 'models/wallpaper.dart';
 import 'services/wallpaper_cache.dart';
 import 'services/wallpaper_service.dart';
+import 'package:workmanager/workmanager.dart';
+import 'background/wallpaper_worker.dart';
+import 'services/scheduler_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Workmanager().initialize(
+    callbackDispatcher,
+    isInDebugMode: true,
+  );
+
   runApp(const SlipstreamApp());
 }
 
@@ -43,9 +53,7 @@ class _HomeScreenState
   bool loading = true;
 
   String target = "Both";
-  String changeMode = "interval";
-  int intervalHours = 3;
-  int intervalMinutes = 0;
+  String changeMode = "fixed";
 
   @override
   void initState() {
@@ -209,137 +217,188 @@ class _HomeScreenState
               const SizedBox(height: 35),
 
               const Text(
-                "Change Mode",
+                "Auto Change",
                 style: TextStyle(
                   fontSize: 16,
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                 ),
-                child: SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(
-                      value: "interval",
-                      label: Text("Timer"),
-                    ),
-                    ButtonSegment(
-                      value: "fixed",
-                      label: Text("Fixed"),
-                    ),
-                    ButtonSegment(
-                      value: "unlock",
-                      label: Text("Unlock"),
-                    ),
-                  ],
-                  selected: {changeMode},
-                  onSelectionChanged: (value) {
-                    setState(() {
-                      changeMode = value.first;
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(height: 35),
-
-              if (changeMode == "interval") ...[
-
-                const Text(
-                  "Change Every",
-                  style: TextStyle(
-                    fontSize: 16,
-                  ),
-                ),
-
-                const SizedBox(height: 15),
-
-                Row(
+                child: Column(
                   children: [
 
-                    Expanded(
-                      child: SizedBox(
-                        height: 160,
-                        child: ListWheelScrollView.useDelegate(
-                          itemExtent: 45,
-                          perspective: 0.004,
-                          diameterRatio: 1.7,
-                          controller: FixedExtentScrollController(
-                            initialItem: intervalHours,
-                          ),
-                          onSelectedItemChanged: (index) {
-                            setState(() {
-                              intervalHours = index;
-                            });
-                          },
-                          childDelegate:
-                              ListWheelChildBuilderDelegate(
-                            childCount: 24,
-                            builder: (context, index) {
-                              return Center(
-                                child: Text(
-                                  "${index.toString().padLeft(2, '0')} h",
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
+                    ListTile(
+                      title: const Text(
+                        "Fixed Wallpaper",
+                      ),
+                      leading: Radio<String>(
+                        value: "fixed",
+                        groupValue: changeMode,
+                        onChanged: (value) async {
+                          setState(() {
+                            changeMode = value!;
+                          });
+
+                          await SchedulerService.stop();
+                        },
                       ),
                     ),
 
-                    Expanded(
-                      child: SizedBox(
-                        height: 160,
-                        child: ListWheelScrollView.useDelegate(
-                          itemExtent: 45,
-                          perspective: 0.004,
-                          diameterRatio: 1.7,
-                          controller: FixedExtentScrollController(
-                            initialItem: intervalMinutes ~/ 5,
-                          ),
-                          onSelectedItemChanged: (index) {
-                            setState(() {
-                              intervalMinutes = index * 5;
-                            });
-                          },
-                          childDelegate:
-                              ListWheelChildBuilderDelegate(
-                            childCount: 12,
-                            builder: (context, index) {
-                              final minute = index * 5;
+                    ListTile(
+                      title: const Text(
+                        "Every 15 Minutes",
+                      ),
+                      leading: Radio<String>(
+                        value: "15m",
+                        groupValue: changeMode,
+                        onChanged: (value) async {
+                          setState(() {
+                            changeMode = value!;
+                          });
 
-                              return Center(
-                                child: Text(
-                                  "${minute.toString().padLeft(2, '0')} m",
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
+                          await SchedulerService.start(
+                            const Duration(
+                              minutes: 15,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    ListTile(
+                      title: const Text(
+                        "Every 30 Minutes",
+                      ),
+                      leading: Radio<String>(
+                        value: "30m",
+                        groupValue: changeMode,
+                        onChanged: (value) async {
+                          setState(() {
+                            changeMode = value!;
+                          });
+
+                          await SchedulerService.start(
+                            const Duration(
+                              minutes: 30,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    ListTile(
+                      title: const Text(
+                        "Every 1 Hour",
+                      ),
+                      leading: Radio<String>(
+                        value: "1h",
+                        groupValue: changeMode,
+                        onChanged: (value) async {
+                          setState(() {
+                            changeMode = value!;
+                          });
+
+                          await SchedulerService.start(
+                            const Duration(
+                              hours: 1,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    ListTile(
+                      title: const Text(
+                        "Every 3 Hours",
+                      ),
+                      leading: Radio<String>(
+                        value: "3h",
+                        groupValue: changeMode,
+                        onChanged: (value) async {
+                          setState(() {
+                            changeMode = value!;
+                          });
+
+                          await SchedulerService.start(
+                            const Duration(
+                              hours: 3,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    ListTile(
+                      title: const Text(
+                        "Every 6 Hours",
+                      ),
+                      leading: Radio<String>(
+                        value: "6h",
+                        groupValue: changeMode,
+                        onChanged: (value) async {
+                          setState(() {
+                            changeMode = value!;
+                          });
+
+                          await SchedulerService.start(
+                            const Duration(
+                              hours: 6,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    ListTile(
+                      title: const Text(
+                        "Every 12 Hours",
+                      ),
+                      leading: Radio<String>(
+                        value: "12h",
+                        groupValue: changeMode,
+                        onChanged: (value) async {
+                          setState(() {
+                            changeMode = value!;
+                          });
+
+                          await SchedulerService.start(
+                            const Duration(
+                              hours: 12,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    ListTile(
+                      title: const Text(
+                        "Every 24 Hours",
+                      ),
+                      leading: Radio<String>(
+                        value: "24h",
+                        groupValue: changeMode,
+                        onChanged: (value) async {
+                          setState(() {
+                            changeMode = value!;
+                          });
+
+                          await SchedulerService.start(
+                            const Duration(
+                              hours: 24,
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 10),
-
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Text(
-                    "Auto change every ${intervalHours.toString().padLeft(2, '0')}h ${intervalMinutes.toString().padLeft(2, '0')}m",
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
+              ),
+              
 
               if (changeMode == "fixed") ...[
                 const Spacer(),
